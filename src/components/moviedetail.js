@@ -1,21 +1,62 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { fetchMovie } from '../actions/movieActions';
 import { useDispatch, useSelector } from 'react-redux';
-import { Card, ListGroup, ListGroupItem, Image } from 'react-bootstrap';
+import { Card, ListGroup, ListGroupItem, Image, Form, Button } from 'react-bootstrap';
 import { BsStarFill } from 'react-icons/bs';
-import { useParams } from 'react-router-dom'; // Import useParams
+import { useParams } from 'react-router-dom';
+
+const env = process.env;
 
 const MovieDetail = () => {
   const dispatch = useDispatch();
-  const { movieId } = useParams(); // Get movieId from URL parameters
+  const { movieId } = useParams();
   const selectedMovie = useSelector(state => state.movie.selectedMovie);
-  const loading = useSelector(state => state.movie.loading); // Assuming you have a loading state in your reducer
-  const error = useSelector(state => state.movie.error); // Assuming you have an error state in your reducer
+  const loading = useSelector(state => state.movie.loading);
+  const error = useSelector(state => state.movie.error);
 
+  const [review, setReview] = useState('');
+  const [rating, setRating] = useState(1);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState('');
 
   useEffect(() => {
     dispatch(fetchMovie(movieId));
   }, [dispatch, movieId]);
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    setSubmitError('');
+    setSubmitSuccess('');
+
+    try {
+      const response = await fetch(`${env.REACT_APP_API_URL}/reviews`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': localStorage.getItem('token')
+        },
+        body: JSON.stringify({
+          movieId: selectedMovie._id,
+          review: review,
+          rating: parseInt(rating)
+        }),
+        mode: 'cors'
+      });
+
+      if (!response.ok) {
+        throw Error(response.statusText);
+      }
+
+      setSubmitSuccess('Review submitted successfully!');
+      setReview('');
+      setRating(1);
+      // Refresh movie to show new review
+      dispatch(fetchMovie(movieId));
+    } catch (e) {
+      setSubmitError('Failed to submit review. Please try again.');
+    }
+  };
 
   const DetailInfo = () => {
     if (loading) {
@@ -51,13 +92,54 @@ const MovieDetail = () => {
             </h4>
           </ListGroupItem>
         </ListGroup>
+
         <Card.Body className="card-body bg-white">
-          {selectedMovie.reviews.map((review, i) => (
-            <p key={i}>
-              <b>{review.username}</b>&nbsp; {review.review} &nbsp; <BsStarFill />{' '}
-              {review.rating}
-            </p>
-          ))}
+          <h5>Reviews</h5>
+          {selectedMovie.reviews && selectedMovie.reviews.length > 0 ? (
+            selectedMovie.reviews.map((review, i) => (
+              <p key={i}>
+                <b>{review.username}</b>&nbsp; {review.review} &nbsp; <BsStarFill />{' '}
+                {review.rating}
+              </p>
+            ))
+          ) : (
+            <p>No reviews yet. Be the first to review!</p>
+          )}
+        </Card.Body>
+
+        {/* Submit Review Form */}
+        <Card.Body className="bg-white">
+          <h5>Submit a Review</h5>
+          {submitError && <p style={{ color: 'red' }}>{submitError}</p>}
+          {submitSuccess && <p style={{ color: 'green' }}>{submitSuccess}</p>}
+          <Form onSubmit={handleSubmitReview}>
+            <Form.Group controlId="rating" className="mb-3">
+              <Form.Label>Rating (1-5)</Form.Label>
+              <Form.Control
+                as="select"
+                value={rating}
+                onChange={(e) => setRating(e.target.value)}
+              >
+                <option value={1}>1 ⭐</option>
+                <option value={2}>2 ⭐⭐</option>
+                <option value={3}>3 ⭐⭐⭐</option>
+                <option value={4}>4 ⭐⭐⭐⭐</option>
+                <option value={5}>5 ⭐⭐⭐⭐⭐</option>
+              </Form.Control>
+            </Form.Group>
+            <Form.Group controlId="review" className="mb-3">
+              <Form.Label>Review</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                placeholder="Write your review here..."
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+                required
+              />
+            </Form.Group>
+            <Button type="submit" variant="primary">Submit Review</Button>
+          </Form>
         </Card.Body>
       </Card>
     );
@@ -65,6 +147,5 @@ const MovieDetail = () => {
 
   return <DetailInfo />;
 };
-
 
 export default MovieDetail;
