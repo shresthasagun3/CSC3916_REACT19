@@ -51,101 +51,89 @@ const MovieDetail = () => {
       setSubmitSuccess('Review submitted successfully!');
       setReview('');
       setRating(1);
-      // Refresh movie to show new review
       dispatch(fetchMovie(movieId));
     } catch (e) {
       setSubmitError('Failed to submit review. Please try again.');
     }
   };
 
-  const DetailInfo = () => {
-    if (loading) {
-      return <div>Loading....</div>;
-    }
+  if (loading) return <div>Loading....</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!selectedMovie) return <div>No movie data available.</div>;
 
-    if (error) {
-      return <div>Error: {error}</div>;
-    }
+  return (
+    <Card className="bg-dark text-dark p-4 rounded">
+      <Card.Header>Movie Detail</Card.Header>
+      <Card.Body>
+        <Image className="image" src={selectedMovie.imageUrl} thumbnail />
+      </Card.Body>
+      <ListGroup>
+        <ListGroupItem>{selectedMovie.title}</ListGroupItem>
+        <ListGroupItem>
+          {selectedMovie.actors && selectedMovie.actors.map((actor, i) => (
+            <p key={i}>
+              <b>{actor.actorName}</b> {actor.characterName}
+            </p>
+          ))}
+        </ListGroupItem>
+        <ListGroupItem>
+          <h4>
+            <BsStarFill /> {selectedMovie.avgRating}
+          </h4>
+        </ListGroupItem>
+      </ListGroup>
 
-    if (!selectedMovie) {
-      return <div>No movie data available.</div>;
-    }
+      {/* Reviews List */}
+      <Card.Body className="card-body bg-white">
+        <h5>Reviews</h5>
+        {selectedMovie.reviews && selectedMovie.reviews.length > 0 ? (
+          selectedMovie.reviews.map((review, i) => (
+            <p key={i}>
+              <b>{review.username}</b>&nbsp; {review.review} &nbsp; <BsStarFill />{' '}
+              {review.rating}
+            </p>
+          ))
+        ) : (
+          <p>No reviews yet. Be the first to review!</p>
+        )}
+      </Card.Body>
 
-    return (
-      <Card className="bg-dark text-dark p-4 rounded">
-        <Card.Header>Movie Detail</Card.Header>
-        <Card.Body>
-          <Image className="image" src={selectedMovie.imageUrl} thumbnail />
-        </Card.Body>
-        <ListGroup>
-          <ListGroupItem>{selectedMovie.title}</ListGroupItem>
-          <ListGroupItem>
-            {selectedMovie.actors.map((actor, i) => (
-              <p key={i}>
-                <b>{actor.actorName}</b> {actor.characterName}
-              </p>
-            ))}
-          </ListGroupItem>
-          <ListGroupItem>
-            <h4>
-              <BsStarFill /> {selectedMovie.avgRating}
-            </h4>
-          </ListGroupItem>
-        </ListGroup>
-
-        <Card.Body className="card-body bg-white">
-          <h5>Reviews</h5>
-          {selectedMovie.reviews && selectedMovie.reviews.length > 0 ? (
-            selectedMovie.reviews.map((review, i) => (
-              <p key={i}>
-                <b>{review.username}</b>&nbsp; {review.review} &nbsp; <BsStarFill />{' '}
-                {review.rating}
-              </p>
-            ))
-          ) : (
-            <p>No reviews yet. Be the first to review!</p>
-          )}
-        </Card.Body>
-
-        {/* Submit Review Form */}
-        <Card.Body className="bg-white">
-          <h5>Submit a Review</h5>
-          {submitError && <p style={{ color: 'red' }}>{submitError}</p>}
-          {submitSuccess && <p style={{ color: 'green' }}>{submitSuccess}</p>}
-          <Form onSubmit={handleSubmitReview}>
-            <Form.Group controlId="rating" className="mb-3">
-              <Form.Label>Rating (1-5)</Form.Label>
-              <Form.Control
-                as="select"
-                value={rating}
-                onChange={(e) => setRating(e.target.value)}
-              >
-                <option value={1}>1 ⭐</option>
-                <option value={2}>2 ⭐⭐</option>
-                <option value={3}>3 ⭐⭐⭐</option>
-                <option value={4}>4 ⭐⭐⭐⭐</option>
-                <option value={5}>5 ⭐⭐⭐⭐⭐</option>
-              </Form.Control>
-            </Form.Group>
-            <Form.Group controlId="review" className="mb-3">
-              <Form.Label>Review</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                placeholder="Write your review here..."
-                value={review}
-                onChange={(e) => setReview(e.target.value)}
-                required
-              />
-            </Form.Group>
-            <Button type="submit" variant="primary">Submit Review</Button>
-          </Form>
-        </Card.Body>
-      </Card>
-    );
-  };
-
-  return <DetailInfo />;
+      {/* Submit Review Form */}
+      <Card.Body className="bg-white">
+        <h5>Submit a Review</h5>
+        {submitError && <p style={{ color: 'red' }}>{submitError}</p>}
+        {submitSuccess && <p style={{ color: 'green' }}>{submitSuccess}</p>}
+        <Form onSubmit={handleSubmitReview}>
+          <Form.Group controlId="rating" className="mb-3">
+            <Form.Label>Rating (1-5)</Form.Label>
+            <Form.Control
+              as="select"
+              value={rating}
+              onChange={(e) => setRating(e.target.value)}
+            >
+              <option value={1}>1 </option>
+              <option value={2}>2 </option>
+              <option value={3}>3 </option>
+              <option value={4}>4 </option>
+              <option value={5}>5 </option>
+            </Form.Control>
+          </Form.Group>
+          <Form.Group controlId="reviewText" className="mb-3">
+            <Form.Label>Review</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              placeholder="Write your review here..."
+              value={review}
+              onChange={(e) => setReview(e.target.value)}
+              required
+            />
+          </Form.Group>
+          <Button type="submit" variant="primary">Submit Review</Button>
+        </Form>
+      </Card.Body>
+    </Card>
+  );
 };
 
 export default MovieDetail;
